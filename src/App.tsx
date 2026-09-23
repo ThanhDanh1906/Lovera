@@ -23,7 +23,12 @@ import {
   ArrowRight,
   Wifi,
   Battery,
-  MapPin
+  MapPin,
+  Settings,
+  LogOut,
+  AlertTriangle,
+  X,
+  HeartHandshake
 } from 'lucide-react';
 
 import avatarAlex from './assets/images/partner_avatar_alex_1790144456462.jpg';
@@ -58,11 +63,17 @@ export default function App() {
   const [partnerOne, setPartnerOne] = useState('Alex');
   const [partnerTwo, setPartnerTwo] = useState('Sam');
   const [daysCount, setDaysCount] = useState(365);
+  const [anniversaryDate, setAnniversaryDate] = useState('2025-09-22');
   const [lovePoints, setLovePoints] = useState(1500);
   const [level, setLevel] = useState(4);
   const [waterAnimation, setWaterAnimation] = useState(false);
   const [pingSent, setPingSent] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState(88);
+
+  // Settings Bottom Sheet State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
+  const [settingsSavedMessage, setSettingsSavedMessage] = useState('');
 
   // AI Dating Planner form state
   const [budget, setBudget] = useState(65);
@@ -189,6 +200,36 @@ export default function App() {
     }, 700);
   };
 
+  const handleAnniversaryChange = (newDateStr: string) => {
+    setAnniversaryDate(newDateStr);
+    try {
+      const start = new Date(newDateStr);
+      const now = new Date();
+      if (!isNaN(start.getTime())) {
+        const diffTime = now.getTime() - start.getTime();
+        const diffDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+        setDaysCount(diffDays);
+        setSettingsSavedMessage('Đã cập nhật ngày bắt đầu yêu!');
+        setTimeout(() => setSettingsSavedMessage(''), 2000);
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleUnpairConfirm = () => {
+    setShowUnpairConfirm(false);
+    setIsSettingsOpen(false);
+    playChime(380);
+    setCurrentScreen('pairing');
+  };
+
+  const handleLogout = () => {
+    setIsSettingsOpen(false);
+    playChime(380);
+    setCurrentScreen('login');
+  };
+
   return (
     <div className="min-h-screen bg-stone-100 text-stone-800 flex flex-col items-center justify-start selection:bg-rose-200 selection:text-rose-900 relative">
       
@@ -223,9 +264,9 @@ export default function App() {
 
           {/* ========================================================= */}
           {/* 2. DUY NHẤT 1 THANH HEADER ĐẦU TRANG                      */}
-          {/* Căn trái: LOVERA TOGETHER | Căn phải: Badge Online        */}
+          {/* Căn trái: LOVERA TOGETHER | Căn phải: Nút Cài đặt (Gear)  */}
           {/* ========================================================= */}
-          <div className="bg-white/95 backdrop-blur-md border-b border-rose-100/60 px-4 py-2.5 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
+          <div className="bg-white/95 backdrop-blur-md border-b border-rose-100/60 px-4 py-1.5 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
             {/* Căn trái: Logo Tên App LOVERA TOGETHER */}
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-rose-500 to-purple-600 flex items-center justify-center text-white shadow-xs">
@@ -241,20 +282,17 @@ export default function App() {
               </div>
             </div>
 
-            {/* Căn phải: Trạng thái hoạt động (Badge Online) */}
+            {/* Căn phải: Nút Cài đặt (Gear Icon) - Vùng chạm tối thiểu 44x44px */}
             <button
               onClick={() => {
-                playChime(550);
-                setCurrentScreen('status');
+                playChime(600);
+                setIsSettingsOpen(true);
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200/90 rounded-full transition-colors active:scale-95"
-              title="Xem trạng thái kết nối chi tiết"
+              aria-label="Cài đặt ứng dụng"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-2xl flex items-center justify-center text-stone-600 hover:text-rose-600 hover:bg-rose-50/80 active:scale-95 transition-all"
+              title="Cài đặt (Settings)"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-[11px] font-bold text-emerald-800">Online</span>
+              <Settings className="w-5 h-5 text-stone-700 hover:text-rose-600 transition-colors" />
             </button>
           </div>
 
@@ -288,10 +326,20 @@ export default function App() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                        {/* Chấm tròn xanh nhỏ online ngay cạnh Avatar */}
+                        <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+                        </span>
                       </div>
                       <div>
-                        <h3 className="font-bold text-xs text-stone-900 leading-tight">{partnerOne}</h3>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-bold text-xs text-stone-900 leading-tight">{partnerOne}</h3>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Online
+                          </span>
+                        </div>
                         <p className="text-[10px] text-stone-500 flex items-center gap-0.5 mt-0.5">
                           <Smile className="w-2.5 h-2.5 text-rose-400" />
                           <span>Đang nhớ bạn</span>
@@ -317,10 +365,20 @@ export default function App() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                        {/* Chấm tròn xanh nhỏ online ngay cạnh Avatar */}
+                        <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+                        </span>
                       </div>
                       <div>
-                        <h3 className="font-bold text-xs text-stone-900 leading-tight">{partnerTwo}</h3>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Online
+                          </span>
+                          <h3 className="font-bold text-xs text-stone-900 leading-tight">{partnerTwo}</h3>
+                        </div>
                         <p className="text-[10px] text-stone-500 flex items-center justify-end gap-0.5 mt-0.5">
                           <Flame className="w-2.5 h-2.5 text-amber-500" />
                           <span>Đã kết nối</span>
@@ -387,15 +445,22 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* Phụ đề 1 năm yêu nhau */}
+                  {/* Phụ đề ngày yêu & chỉnh sửa */}
                   <div className="pt-2 mt-2 border-t border-white/20 flex items-center justify-between text-[11px] text-rose-100/95 font-medium">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-rose-200" />
-                      <span>Kỷ niệm 1 Năm Yêu</span>
+                      <span>Từ: {anniversaryDate}</span>
                     </span>
-                    <span className="text-white font-bold bg-white/15 px-2 py-0.5 rounded-full">
-                      8,760 Giờ
-                    </span>
+                    <button
+                      onClick={() => {
+                        playChime(600);
+                        setIsSettingsOpen(true);
+                      }}
+                      className="text-white text-[10px] font-bold bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 active:scale-95"
+                      title="Chỉnh sửa ngày bắt đầu yêu trong Cài đặt"
+                    >
+                      <span>Sửa ngày yêu</span>
+                    </button>
                   </div>
                 </div>
 
@@ -913,6 +978,238 @@ export default function App() {
           {deviceFrame && (
             <div className="absolute bottom-1 inset-x-0 flex justify-center pointer-events-none z-40">
               <div className="w-28 h-1 bg-stone-400/80 rounded-full"></div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* 5. BOTTOM SHEET: CÀI ĐẶT (SETTINGS SCREEN)                */}
+          {/* Nhóm 1: Cài đặt Cặp đôi (Couple Settings & Unpair)        */}
+          {/* Nhóm 2: Cài đặt Kỷ niệm (Anniversary Settings)            */}
+          {/* Nhóm 3: Hệ thống (System & Logout)                        */}
+          {/* ========================================================= */}
+          {isSettingsOpen && (
+            <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs">
+              {/* Click outside backdrop to close */}
+              <div 
+                className="flex-1" 
+                onClick={() => {
+                  playChime(420);
+                  setIsSettingsOpen(false);
+                  setShowUnpairConfirm(false);
+                }} 
+              />
+
+              {/* Bottom Sheet Modal Container */}
+              <div className="bg-white rounded-t-[2rem] max-h-[88%] flex flex-col shadow-2xl border-t border-rose-100 overflow-hidden text-stone-800 animate-slide-up">
+                
+                {/* Top Drag Indicator */}
+                <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto my-2.5 shrink-0"></div>
+
+                {/* Header with Title & Hit Target >= 44x44px Close Button */}
+                <div className="px-5 pb-2.5 border-b border-stone-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shadow-2xs">
+                      <Settings className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-stone-900 leading-tight">Cài Đặt (Settings)</h2>
+                      <p className="text-[10px] text-stone-400">Không gian riêng của {partnerOne} & {partnerTwo}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Close button with >= 44x44px target */}
+                  <button
+                    onClick={() => {
+                      playChime(420);
+                      setIsSettingsOpen(false);
+                      setShowUnpairConfirm(false);
+                    }}
+                    className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-100 active:scale-95 transition-colors"
+                    aria-label="Đóng cài đặt"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Settings Scrollable Content */}
+                <div className="p-4 overflow-y-auto space-y-3.5 pb-8">
+                  
+                  {/* Saved Feedback Toast */}
+                  {settingsSavedMessage && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-semibold">{settingsSavedMessage}</span>
+                    </div>
+                  )}
+
+                  {/* ------------------------------------------------- */}
+                  {/* NHÓM 1: CÀI ĐẶT CẶP ĐÔI (COUPLE SETTINGS)         */}
+                  {/* ------------------------------------------------- */}
+                  <div className="bg-rose-50/50 rounded-2xl p-3.5 border border-rose-100/90 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
+                        <HeartHandshake className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wide">
+                          1. Cài Đặt Cặp Đôi (Couple)
+                        </h3>
+                        <p className="text-[10px] text-stone-500">Đổi biệt danh xưng hô & quản lý kết nối</p>
+                      </div>
+                    </div>
+
+                    {/* Inputs Đổi biệt danh của 2 người */}
+                    <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-stone-600 mb-1">
+                          Biệt danh của bạn
+                        </label>
+                        <input
+                          type="text"
+                          value={partnerOne}
+                          onChange={(e) => {
+                            setPartnerOne(e.target.value);
+                            setSettingsSavedMessage('Đã lưu biệt danh mới!');
+                            setTimeout(() => setSettingsSavedMessage(''), 1500);
+                          }}
+                          className="w-full text-xs font-semibold px-2.5 py-2 bg-white rounded-xl border border-rose-200/90 text-stone-800 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                          placeholder="Alex"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-stone-600 mb-1">
+                          Biệt danh người ấy
+                        </label>
+                        <input
+                          type="text"
+                          value={partnerTwo}
+                          onChange={(e) => {
+                            setPartnerTwo(e.target.value);
+                            setSettingsSavedMessage('Đã lưu biệt danh mới!');
+                            setTimeout(() => setSettingsSavedMessage(''), 1500);
+                          }}
+                          className="w-full text-xs font-semibold px-2.5 py-2 bg-white rounded-xl border border-rose-200/90 text-stone-800 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                          placeholder="Sam"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nút Hủy kết nối (Unpair) & Xác nhận */}
+                    <div className="pt-2 border-t border-rose-200/60">
+                      {!showUnpairConfirm ? (
+                        <button
+                          onClick={() => {
+                            playChime(450);
+                            setShowUnpairConfirm(true);
+                          }}
+                          className="w-full min-h-[44px] py-2.5 px-3 bg-white hover:bg-rose-100/70 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors active:scale-98"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Hủy kết nối (Unpair)</span>
+                          </div>
+                          <span className="text-[10px] text-stone-400 font-normal">Giải phóng tài khoản →</span>
+                        </button>
+                      ) : (
+                        <div className="bg-white p-3 rounded-xl border border-rose-300 space-y-2.5 shadow-xs">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                            <div>
+                              <h4 className="text-xs font-bold text-rose-900">Xác nhận hủy kết nối cặp đôi?</h4>
+                              <p className="text-[10px] text-stone-600 leading-snug mt-0.5">
+                                Tài khoản sẽ được giải phóng khỏi liên kết với <strong>{partnerTwo}</strong>. Dữ liệu vườn hoa và ngày yêu sẽ được đóng băng an toàn cho đến khi hai bạn ghép đôi lại.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              onClick={() => setShowUnpairConfirm(false)}
+                              className="flex-1 min-h-[38px] py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-lg transition-colors"
+                            >
+                              Hủy bỏ
+                            </button>
+                            <button
+                              onClick={handleUnpairConfirm}
+                              className="flex-1 min-h-[38px] py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors active:scale-95"
+                            >
+                              Đồng ý Hủy ghép đôi
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ------------------------------------------------- */}
+                  {/* NHÓM 2: CÀI ĐẶT KỶ NIỆM (ANNIVERSARY SETTINGS)    */}
+                  {/* ------------------------------------------------- */}
+                  <div className="bg-purple-50/50 rounded-2xl p-3.5 border border-purple-100/90 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                        <Calendar className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wide">
+                          2. Cài Đặt Kỷ Niệm (Anniversary)
+                        </h3>
+                        <p className="text-[10px] text-stone-500">Chỉnh sửa ngày bắt đầu yêu (Love Day Counter)</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-purple-200/80 space-y-2">
+                      <label className="block text-[10px] font-semibold text-stone-600">
+                        Ngày bắt đầu yêu nhau:
+                      </label>
+                      <input
+                        type="date"
+                        value={anniversaryDate}
+                        onChange={(e) => handleAnniversaryChange(e.target.value)}
+                        className="w-full text-xs font-semibold px-3 py-2 bg-stone-50 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-stone-800"
+                      />
+                      <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-stone-100 text-stone-600">
+                        <span className="text-[10px] text-stone-500">Đã đồng bộ lên Love Day Counter:</span>
+                        <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60">
+                          {daysCount} Ngày yêu
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ------------------------------------------------- */}
+                  {/* NHÓM 3: HỆ THỐNG (SYSTEM & LOGOUT)                */}
+                  {/* ------------------------------------------------- */}
+                  <div className="bg-stone-50 rounded-2xl p-3.5 border border-stone-200/80 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-stone-200 text-stone-700 flex items-center justify-center">
+                        <Smartphone className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wide">
+                          3. Hệ Thống (System)
+                        </h3>
+                        <p className="text-[10px] text-stone-500">Quản lý tài khoản & đăng xuất</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full min-h-[44px] py-2.5 px-3 bg-white hover:bg-rose-50 text-stone-700 hover:text-rose-600 border border-stone-200 hover:border-rose-300 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors active:scale-98"
+                    >
+                      <div className="flex items-center gap-2">
+                        <LogOut className="w-4 h-4 text-stone-500 group-hover:text-rose-600" />
+                        <span>Đăng xuất (Logout)</span>
+                      </div>
+                      <span className="text-[10px] text-stone-400 font-mono">{email}</span>
+                    </button>
+                  </div>
+
+                  {/* Footer App Info */}
+                  <div className="text-center pt-2 text-[10px] text-stone-400">
+                    LOVERA TOGETHER · Bản thử nghiệm MVP v1.0.0
+                  </div>
+
+                </div>
+              </div>
             </div>
           )}
 
